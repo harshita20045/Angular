@@ -1,0 +1,215 @@
+<div class="page-container">
+  <!-- Header Bar -->
+  <header class="header-section">
+    <div>
+      <h1 class="page-title">Employee Directory</h1>
+      <p class="page-subtitle">Manage, search, and track all team members across departments</p>
+    </div>
+    <button class="btn btn-primary" (click)="openAddModal()">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add Employee
+    </button>
+  </header>
+
+  <!-- Filter & Search Controls -->
+  <div class="controls-card">
+    <div class="search-box">
+      <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Search by name, email, or role..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filters-group">
+      <div class="filter-item">
+        <label>Department</label>
+        <select
+          [value]="selectedDepartment()"
+          (change)="selectedDepartment.set($any($event.target).value)"
+          class="select-input"
+        >
+          @for (dept of departments; track dept) {
+            <option [value]="dept">{{ dept }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Status</label>
+        <select
+          [value]="selectedStatus()"
+          (change)="selectedStatus.set($any($event.target).value)"
+          class="select-input"
+        >
+          @for (stat of statuses; track stat) {
+            <option [value]="stat">{{ stat }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employee Table -->
+  <div class="table-container">
+    @if (filteredEmployees().length > 0) {
+      <table class="employee-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Role & Department</th>
+            <th>Location</th>
+            <th>Annual Compensation</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (emp of filteredEmployees(); track emp.id) {
+            <tr class="table-row">
+              <td>
+                <div class="user-cell">
+                  <img [src]="emp.avatar" [alt]="emp.name" class="avatar" />
+                  <div class="user-info">
+                    <span class="user-name">{{ emp.name }}</span>
+                    <span class="user-email">{{ emp.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="role-cell">
+                  <span class="role-title">{{ emp.role }}</span>
+                  <span class="dept-badge">{{ emp.department }}</span>
+                </div>
+              </td>
+              <td class="location-cell">{{ emp.location }}</td>
+              <td class="salary-cell">
+                {{ emp.salary | currency: 'USD' : 'symbol' : '1.0-0' }}
+              </td>
+              <td>
+                <span
+                  class="status-pill"
+                  [ngClass]="{
+                    'status-active': emp.status === 'Active',
+                    'status-leave': emp.status === 'On Leave',
+                    'status-inactive': emp.status === 'Inactive'
+                  }"
+                  (click)="toggleStatus(emp)"
+                  title="Click to cycle status"
+                >
+                  <span class="status-dot"></span>
+                  {{ emp.status }}
+                </span>
+              </td>
+              <td class="text-right">
+                <button
+                  class="btn-icon delete"
+                  (click)="deleteEmployee(emp.id, emp.name)"
+                  title="Remove employee"
+                >
+                  <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <div class="empty-icon-wrap">
+          <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <h3>No employees found</h3>
+        <p>No team members match your current filters. Try resetting the search or filter criteria.</p>
+        <button class="btn btn-secondary" (click)="searchQuery.set(''); selectedDepartment.set('All'); selectedStatus.set('All')">
+          Reset Filters
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Add Employee Modal -->
+  @if (isAddModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddModal()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Add New Employee</h3>
+          <button class="close-btn" (click)="closeAddModal()">&times;</button>
+        </div>
+
+        <form (ngSubmit)="saveEmployee()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" [(ngModel)]="newEmployee.name" name="name" required placeholder="e.g. Jordan Hayes" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Email Address *</label>
+              <input type="email" [(ngModel)]="newEmployee.email" name="email" required placeholder="jordan@company.com" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Role / Title *</label>
+              <input type="text" [(ngModel)]="newEmployee.role" name="role" required placeholder="e.g. Product Designer" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Department</label>
+              <select [(ngModel)]="newEmployee.department" name="department" class="form-control">
+                <option value="Engineering">Engineering</option>
+                <option value="Design">Design</option>
+                <option value="Product">Product</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Finance">Finance</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" [(ngModel)]="newEmployee.location" name="location" placeholder="e.g. Remote or Denver, CO" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Annual Salary ($)</label>
+              <input type="number" [(ngModel)]="newEmployee.salary" name="salary" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <select [(ngModel)]="newEmployee.status" name="status" class="form-control">
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Join Date</label>
+              <input type="date" [(ngModel)]="newEmployee.joinDate" name="joinDate" class="form-control" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Member</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
