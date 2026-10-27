@@ -1,0 +1,46 @@
+<div class="app-layout">
+  <!-- Desktop / Responsive Sidebar -->
+  <aside class="sidebar-container" [class.open]="mobileMenuOpen">
+    <app-sidebar></app-sidebar>
+  </aside>
+
+  <!-- Backdrop for mobile -->
+  @if (mobileMenuOpen) {
+    <div class="backdrop" (click)="toggleMobileMenu()"></div>
+  }
+
+  <!-- Main View Area -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="mobile-toggle-btn" (click)="toggleMobileMenu()" aria-label="Toggle navigation">
+          ☰
+        </button>
+        <div class="workspace-brand">
+          <span class="tenant-badge">US-EAST-1</span>
+          <span class="tenant-name">Production Cluster</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Quick Cart Status Link -->
+        <a routerLink="/cart" class="cart-quick-link" title="View Staged Procurement Cart">
+          <span class="cart-icon">🛒</span>
+          <span class="cart-text">Cart</span>
+          @if (cartService.totalItemsCount() > 0) {
+            <span class="cart-badge">{{ cartService.totalItemsCount() }}</span>
+          }
+        </a>
+
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span class="status-text">All Systems Operational</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
